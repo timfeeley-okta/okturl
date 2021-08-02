@@ -62,16 +62,6 @@ const Home = () => {
       </Head>
       <div className="container mx-auto px-4">
         <div className="max-w-xl mx-auto">
-          <div className="mb-10">
-            <a className="text-3xl font-bold leading-none" href="#">
-              <img
-                className="h-12 mx-auto"
-                src="atis-assets/logo/atis/atis-mono-black.svg"
-                alt=""
-                width="auto"
-              />
-            </a>
-          </div>
           <div className="p-6 lg:p-12 mb-6 bg-white shadow rounded">
             <div className="mb-6">
               <span className="text-gray-500">okturl</span>
@@ -150,10 +140,10 @@ const Home = () => {
                           className="bg-green-50 group-hover:bg-green-100  p-1.5 text-green-500 focus:outline-none "
                           onClick={() => {
                             if (resultUrlRef.current) {
-                              const r = document.createRange()
-                              r.selectNode(resultUrlRef.current)
-                              window.getSelection()?.removeAllRanges()
-                              window.getSelection()?.addRange(r)
+                              window
+                                .getSelection()
+                                ?.selectAllChildren(resultUrlRef.current)
+
                               document.execCommand('copy')
                               setCopied(true)
                               window.setTimeout(setCopied.bind(false), 1500)
