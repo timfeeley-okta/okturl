@@ -1,32 +1,74 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-const generateUniqueId = require("generate-unique-id");
-const faunadb = require("faunadb"),
-  q = faunadb.query;
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { generate } from 'randomstring'
+import { Client, query } from 'faunadb'
+import url from 'url'
 
-const client = new faunadb.Client({
-  secret: process.env.NEXT_PUBLIC_FAUNA_KEY,
-});
-
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const { url } = req.body;
-
-  const id = generateUniqueId({
-    length: 8,
-    useLetters: false,
-  });
+const client = new Client({
+  secret: process.env.FAUNA_KEY || ''
+})
+function isValidHttpUrl(str: string) {
+  let url
 
   try {
-    const info = await client.query(
-      q.Create(q.Collection("urls"), {
-        data: {
-          ourl: url,
-          surl: id,
-        },
-      })
-    );
-
-    res.status(200).send(id);
-  } catch (error) {
-    res.status(400).send(error.message);
+    url = new URL(str)
+  } catch (_) {
+    return false
   }
-};
+
+  return url.protocol === 'http:' || url.protocol === 'https:'
+}
+
+export default async (req: NextApiRequest, res: NextApiResponse) => {
+  let { originalUrl } = req.body
+  const { shortUrl } = req.body
+
+  let p = url.parse(originalUrl)
+  if (!p.slashes) p = url.parse('http://' + originalUrl)
+  else if (!p.protocol) p = url.parse('http:' + originalUrl)
+  originalUrl = p.href
+
+  if (!isValidHttpUrl(originalUrl)) {
+    res.status(200).json({ error: { message: 'URL to shorten is invalid' } })
+    return false
+  }
+
+  const finalUrl: string =
+    shortUrl ||
+    generate({
+      length: 11,
+      capitalization: 'lowercase',
+      charset: 'hex'
+    })
+
+  const validUrl = new RegExp('^([A-z0-9-])+$')
+  if (!validUrl.test(finalUrl)) {
+    res.status(200).json({
+      error: { message: 'Please use only numbers, letters and underscores' }
+    })
+    return false
+  }
+
+  await client
+    .query(
+      query.Create(query.Collection('urls'), {
+        data: {
+          originalUrl,
+          shortUrl: finalUrl
+        }
+      })
+    )
+    .then((value) => {
+      res.status(200).json({
+        prefix:
+          'http' +
+          (req.headers.host !== 'localhost:3000' ? 's' : '') +
+          '://' +
+          req.headers.host +
+          '/',
+        ...value
+      })
+    })
+    .catch((error) => {
+      res.status(200).json({ error: error })
+    })
+}

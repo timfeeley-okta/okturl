@@ -1,8 +1,8 @@
-import type { AppProps /*, AppContext */ } from "next/app";
-import "../styles/globals.css";
+import type { AppProps } from 'next/app'
+import 'tailwindcss/tailwind.css'
 
-function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+const Okturl = ({ Component, pageProps }: AppProps) => {
+  return <Component {...pageProps} />
 }
 
-export default MyApp;
+export default Okturl
