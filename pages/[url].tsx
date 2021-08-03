@@ -1,24 +1,16 @@
-import { Client, query as q } from 'faunadb'
-import type { GetStaticProps, InferGetStaticPropsType } from 'next'
+import type { GetStaticProps } from 'next'
 import { useRouter } from 'next/router'
+import admin from 'firebase-admin'
 
-type ResponseType = {
-  data?: {
-    originalUrl: string
-    shortUrl: string
-  }
-  description?: string
-}
-
-const Url = ({ url }: InferGetStaticPropsType<typeof getStaticProps>) => {
+const Url = () => {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen pt-16 pb-12 flex flex-col bg-white">
-      <main className="flex-grow flex flex-col justify-center max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col min-h-screen pt-16 pb-12 bg-white">
+      <main className="flex flex-col justify-center flex-grow w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {router.isFallback && (
           <svg
-            className="animate-spin m-auto h-32 w-32 text-oktablue-500"
+            className="w-32 h-32 m-auto animate-spin text-oktablue-500"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -41,8 +33,8 @@ const Url = ({ url }: InferGetStaticPropsType<typeof getStaticProps>) => {
         {!router.isFallback && (
           <div className="py-16">
             <div className="text-center">
-              <h2 className="mt-2 text-red-500 text-4xl font-extrabold  tracking-tight sm:text-5xl">
-                404 {url}
+              <h2 className="mt-2 text-4xl font-extrabold tracking-tight text-red-500 sm:text-5xl">
+                Not found
               </h2>
               <p className="mt-2 text-base text-gray-500">
                 Sorry, there’s no short url for{' '}
@@ -51,7 +43,7 @@ const Url = ({ url }: InferGetStaticPropsType<typeof getStaticProps>) => {
               <div className="mt-6">
                 <a
                   href="/"
-                  className="text-base underline font-medium text-oktablue-500 hover:text-indigo-500"
+                  className="text-base font-medium underline text-oktablue-500 hover:text-indigo-500"
                 >
                   Home<span aria-hidden="true"> &rarr;</span>
                 </a>
@@ -72,31 +64,40 @@ export async function getStaticPaths() {
 }
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const client = new Client({
-    secret: process.env.FAUNA_KEY || ''
-  })
+  let data
 
-  let response: ResponseType = {}
   if (params && params.url) {
-    try {
-      response = await client.query(
-        q.Get(q.Match(q.Index('unique_shorturl'), params.url))
-      )
-    } catch (e) {
-      response = e
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        projectId: 'okturl',
+        storageBucket: 'okturl.appspot.com',
+        serviceAccountId:
+          'firebase-adminsdk-sm9bi@okturl.iam.gserviceaccount.com',
+
+        credential: admin.credential.cert({
+          clientEmail: 'firebase-adminsdk-sm9bi@okturl.iam.gserviceaccount.com',
+          privateKey: process.env.FIREBASE_ADMIN_KEY,
+          projectId: 'okturl'
+        })
+      })
     }
+
+    data = (
+      await admin
+        .firestore()
+        .doc('/urls/' + params.url)
+        .get()
+    ).data()
   }
+
   return {
     props: {},
-    ...(response &&
-      response.data &&
-      response.data.originalUrl && {
-        redirect: { destination: response.data.originalUrl }
+    ...(data &&
+      typeof data !== 'undefined' &&
+      data.url && {
+        redirect: { destination: data.url }
       }),
-    ...(response &&
-      response.description && {
-        notFound: true
-      }),
+
     revalidate: 10
   }
 }
