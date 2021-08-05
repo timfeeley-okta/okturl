@@ -4,7 +4,7 @@ import Document, { Html, Head, Main, NextScript } from 'next/document'
 class MyDocument extends Document {
   render() {
     return (
-      <Html>
+      <Html translate="no" lang="en">
         <Head>
           <link
             rel="icon"
@@ -12,6 +12,7 @@ class MyDocument extends Document {
             sizes="32x32"
             href="/favicon-32x32.png"
           />
+          githuib
           <link
             rel="icon"
             type="image/png"
@@ -29,7 +30,7 @@ class MyDocument extends Document {
             rel="stylesheet"
           />
         </Head>
-        <body className="bg-okta-mid-grey subpixel-antialiased">
+        <body className="subpixel-antialiased bg-okta-mid-grey">
           <Main />
           <NextScript />
         </body>
