@@ -184,7 +184,7 @@ const Home = () => {
                       type="submit"
                       size="XL"
                       className="w-full"
-                      disabled={!canSubmit && auth.user !== null}>
+                      disabled={!canSubmit || auth.user === null}>
                       Submit
                     </Button>
                   }>
