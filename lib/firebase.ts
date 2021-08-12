@@ -1,6 +1,9 @@
-import firebaseClient from 'firebase/app'
-import 'firebase/auth'
-import 'firebase/firestore'
+import { initializeApp, getApps } from 'firebase/app'
+import {
+  getAuth,
+  setPersistence,
+  browserSessionPersistence
+} from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCqHyzM-cCJS5Em26Twj7zwqYblihUw03g',
@@ -11,11 +14,13 @@ const firebaseConfig = {
   appId: '1:176675371954:web:3ad50bd1025328e236c2ab'
 }
 
-if (typeof window !== 'undefined' && !firebaseClient.apps.length) {
-  firebaseClient.initializeApp(firebaseConfig)
-  firebaseClient
-    .auth()
-    .setPersistence(firebaseClient.auth.Auth.Persistence.SESSION)
-}
+const init = () => {
+  if (typeof window !== 'undefined' && !getApps().length) {
+    initializeApp(firebaseConfig)
+    const auth = getAuth()
+    setPersistence(auth, browserSessionPersistence)
 
-export default firebaseClient
+    return auth
+  }
+}
+export default init

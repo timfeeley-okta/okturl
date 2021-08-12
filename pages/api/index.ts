@@ -3,7 +3,7 @@ import { generate } from 'randomstring'
 import admin from 'firebase-admin'
 import { re_alpha_numeric, re_js_rfc3986_URI } from '../../lib/validation'
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (admin.apps.length === 0) {
     admin.initializeApp({
       projectId: 'okturl',
@@ -102,3 +102,5 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     // Handle any other HTTP method
   }
 }
+
+export default handler

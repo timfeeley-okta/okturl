@@ -1,33 +1,41 @@
 import { FC, useState, useEffect, useContext, createContext } from 'react'
-import firebase from '../lib/firebase'
+import init from '../lib/firebase'
+import {
+  User,
+  GoogleAuthProvider,
+  signInWithCredential,
+  onIdTokenChanged,
+  signOut as firebaseSignOut
+} from 'firebase/auth'
 import nookies from 'nookies'
 
 type AuthContextType = {
   signIn?: () => Promise<unknown>
   signOut?: () => Promise<unknown>
-  user?: firebase.User | null
+  user?: User | null
 }
 
 const AuthContext = createContext<AuthContextType>({})
 
 export const AuthProvider: FC = ({ children }) => {
-  const [user, setUser] = useState<firebase.User | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const auth = init()
+
   const signInFromGapi = async () => {
     return new Promise<void>((resolve, reject) => {
+      if (!auth) {
+        reject()
+        return false
+      }
       if (window.gapi.auth2.getAuthInstance().isSignedIn.get()) {
         const { id_token, access_token } = window.gapi.auth2
           .getAuthInstance()
           .currentUser.get()
           .getAuthResponse(true)
 
-        const credential = firebase.auth.GoogleAuthProvider.credential(
-          id_token,
-          access_token
-        )
+        const credential = GoogleAuthProvider.credential(id_token, access_token)
 
-        firebase
-          .auth()
-          .signInWithCredential(credential)
+        signInWithCredential(auth, credential)
           .then(({ user }) => {
             console.log('User is authenticated as ', user && user.uid)
           })
@@ -43,10 +51,9 @@ export const AuthProvider: FC = ({ children }) => {
 
   const signOut = async () => {
     window.gapi.auth2.getAuthInstance().signOut()
-    firebase
-      .auth()
-      .signOut()
-      .then(() => {
+
+    auth &&
+      firebaseSignOut(auth).then(() => {
         setUser(null)
         nookies.destroy(null, 'token')
         nookies.set(null, 'token', '', { path: '/' })
@@ -69,31 +76,36 @@ export const AuthProvider: FC = ({ children }) => {
     if (typeof window !== 'undefined') {
       window.nookies = nookies
     }
-    return firebase.auth().onIdTokenChanged(async (user) => {
-      if (!user) {
-        setUser(null)
+
+    return (
+      auth &&
+      onIdTokenChanged(auth, async (user) => {
+        if (!user) {
+          setUser(null)
+
+          nookies.destroy(null, 'token')
+          nookies.set(null, 'token', '', { path: '/' })
+          return
+        }
+
+        const token = await user.getIdToken()
+        setUser(user)
 
         nookies.destroy(null, 'token')
-        nookies.set(null, 'token', '', { path: '/' })
-        return
-      }
-
-      const token = await user.getIdToken()
-      setUser(user)
-
-      nookies.destroy(null, 'token')
-      nookies.set(null, 'token', token, { path: '/' })
-    })
-  }, [])
+        nookies.set(null, 'token', token, { path: '/' })
+      })
+    )
+  }, [auth])
 
   // force refresh the token every 10 minutes
   useEffect(() => {
     const handle = setInterval(async () => {
-      const user = firebase.auth().currentUser
+      const user = auth && auth.currentUser
+
       if (user) await user.getIdToken(true)
     }, 10 * 60 * 1000)
     return () => clearInterval(handle)
-  }, [])
+  }, [auth])
 
   return (
     <AuthContext.Provider value={{ user, signIn, signOut }}>
