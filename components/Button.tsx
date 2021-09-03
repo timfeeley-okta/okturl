@@ -1,55 +1,61 @@
 import cx from 'classnames'
-import { ButtonHTMLAttributes, FC } from 'react'
-import { Spinner } from '../lib/icons'
+import { HTMLProps } from 'react'
+import { forwardRef } from 'react'
 
-interface ButtonType extends ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: 'XS' | 'SM' | 'MD' | 'LG' | 'XL'
-  theme?: 'FILLED' | 'SECONDARY' | 'ALT_FILLED' | 'OUTLINE'
-  disabled?: boolean
-  waiting?: boolean
+const classes = {
+  motion: 'transition ease-in-out duration-300',
+  base: 'inline-flex items-center border border-transparent',
+  disabled: 'opacity-50 cursor-not-allowed',
+  size: {
+    normal: 'px-3 py-2 text-sm leading-4 font-medium rounded-md shadow-sm '
+  },
+  variant: {
+    primary:
+      'text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
+    secondary:
+      'text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
+    muted:
+      'border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+  }
 }
 
-const Button: FC<ButtonType> = ({
-  size = 'MD',
-  theme = 'FILLED',
-  disabled = false,
-  waiting = false,
-  children,
-  ...props
-}) => (
-  <button
-    {...props}
-    disabled={disabled}
-    className={cx(
-      props.className,
-      'font-medium',
-      {
-        'shadow-sm text-white bg-green-500 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500':
-          !disabled && theme === 'ALT_FILLED',
-        'shadow-sm text-white bg-oktablue-500 hover:bg-oktablue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-oktablue-500':
-          !disabled && theme === 'FILLED',
-        'shadow-sm bg-okta-mid-grey  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-gray-500':
-          disabled && (theme === 'FILLED' || theme === 'ALT_FILLED'),
-        'shadow-sm text-oktablue-700 bg-indigo-100 hover:bg-oktablue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-oktablue-50':
-          !disabled && theme === 'SECONDARY',
-        'shadow-sm text-gray-700 bg-mid-gray bg-okta-mid-grey focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-50':
-          disabled && theme === 'SECONDARY',
-        'border border-gray-300 shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500':
-          !disabled && theme === 'OUTLINE',
-        'border border-gray-300 shadow-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500':
-          disabled && theme === 'OUTLINE'
-      },
-      {
-        'px-2.5 py-1.5 text-xs rounded': size === 'XS',
-        'px-4 py-2 text-sm rounded-md': size == 'SM',
-        'px-4 py-2 text-base rounded-md': size === 'MD',
-        'px-6 py-3 text-base rounded-md': size === 'LG',
-        'p-4 text-base rounded-md': size === 'XL'
-      }
-    )}>
-    {waiting && Spinner}
-    {!waiting && children}
-  </button>
+type ButtonProps = {
+  variant?: 'primary' | 'secondary' | 'muted'
+  size?: 'normal'
+  type?: 'submit' | 'reset' | 'button'
+} & Omit<HTMLProps<HTMLButtonElement>, 'size'>
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      className,
+      type = 'button',
+      variant = 'primary',
+      size = 'normal',
+      disabled = false,
+      ...props
+    },
+    ref
+  ) => (
+    <button
+      ref={ref}
+      disabled={disabled}
+      type={type}
+      className={cx(
+        classes.base,
+        classes.motion,
+        classes.size[size],
+        classes.variant[variant],
+        disabled && classes.disabled,
+        className
+      )}
+      {...props}>
+      {children}
+    </button>
+  )
 )
+
+Button.displayName = 'Button'
 
 export default Button

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es5",
     "lib": [
       "dom",
       "dom.iterable",
@@ -16,28 +16,30 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": ".",
     "jsx": "preserve",
+    "baseUrl": ".",
     "paths": {
-      "@/lib/*": [
-        "./lib/*"
+      "@/pages/*": [
+        "./pages/*"
       ],
       "@/components/*": [
         "./components/*"
       ],
-      "@/pages/*": [
-        "./pages/*"
+      "@/hooks/*": [
+        "./hooks/*"
       ],
-      "@/api/*": [
-        "./pages/api/*"
+      "@/lib/*": [
+        "./lib/*"
       ],
-    }
+      "@/providers/*": [
+        "./providers/*"
+      ]
+    },
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx",
-    "config/firebase.ts"
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules"

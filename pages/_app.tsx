@@ -1,20 +1,14 @@
 import 'tailwindcss/tailwind.css'
 
-import { useEffect } from 'react'
+import { AppProps } from 'next/app'
+import { FirebaseAuthProvider } from 'providers/Firebase'
 
-import { AuthProvider } from '../lib/auth'
-import { insertGapi } from '../lib/gapi'
-
-import type { AppProps } from 'next/app'
-const Okturl = ({ Component, pageProps }: AppProps) => {
-  useEffect(() => {
-    insertGapi()
-  }, [])
+const App = ({ Component, pageProps }: AppProps) => {
   return (
-    <AuthProvider>
+    <FirebaseAuthProvider>
       <Component {...pageProps} />
-    </AuthProvider>
+    </FirebaseAuthProvider>
   )
 }
 
-export default Okturl
+export default App

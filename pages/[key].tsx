@@ -1,17 +1,19 @@
-import type { GetStaticProps } from 'next'
-import { useRouter } from 'next/router'
 import admin from 'firebase-admin'
+import type { GetStaticProps } from 'next'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
+
+import Layout from '@/components/Layout'
 
 const Url = () => {
   const router = useRouter()
 
   return (
-    <div className="flex flex-col min-h-screen pt-16 pb-12 bg-white">
+    <Layout.Outer>
       <main className="flex flex-col justify-center flex-grow w-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {router.isFallback && (
           <svg
-            className="w-32 h-32 m-auto animate-spin text-oktablue-500"
+            className="w-16 h-16 m-auto animate-spin text-indigo-800"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24">
@@ -40,7 +42,7 @@ const Url = () => {
               </p>
               <div className="mt-6">
                 <Link href="/">
-                  <a className="text-base font-medium underline text-oktablue-500 hover:text-indigo-500">
+                  <a className="text-base font-medium underline text-indigo-700 hover:text-indigo-500">
                     Home<span aria-hidden="true"> &rarr;</span>
                   </a>
                 </Link>
@@ -49,11 +51,11 @@ const Url = () => {
           </div>
         )}
       </main>
-    </div>
+    </Layout.Outer>
   )
 }
 
-export async function getStaticPaths() {
+export const getStaticPaths = async () => {
   return {
     paths: [],
     fallback: true
@@ -63,18 +65,16 @@ export async function getStaticPaths() {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   let data
 
-  if (params && params.url) {
+  if (params && params.key) {
     if (admin.apps.length === 0) {
       admin.initializeApp({
-        projectId: 'okturl',
-        storageBucket: 'okturl.appspot.com',
-        serviceAccountId:
-          'firebase-adminsdk-sm9bi@okturl.iam.gserviceaccount.com',
+        serviceAccountId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
 
         credential: admin.credential.cert({
-          clientEmail: 'firebase-adminsdk-sm9bi@okturl.iam.gserviceaccount.com',
-          privateKey: process.env.FIREBASE_ADMIN_KEY,
-          projectId: 'okturl'
+          projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_SERVICE_ACCOUNT,
+          privateKey: process.env.FIREBASE_ADMIN_KEY
         })
       })
     }
@@ -82,7 +82,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     data = (
       await admin
         .firestore()
-        .doc('/urls/' + params.url)
+        .doc('/urls/' + params.key)
         .get()
     ).data()
   }
